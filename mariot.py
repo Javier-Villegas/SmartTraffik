@@ -11,9 +11,12 @@ import json
 broker="127.0.0.1"
 port=1883
 
+global ID
+ID = None
 
 AE_id_base = "BTNode"
-csi = "Mobius2" # CSE-ID
+csi = "Mobius" # CSE-ID
+csi_mqtt = "Mobius2" # CSE-ID for MQTT topics
 #rn = "maoriot-cse-in"
 rqi = "test_rqi"
 
@@ -103,15 +106,28 @@ def message_discover(common_msg,to,fc):
 #define callback
 def on_message(client, userdata, message):
 
-        print("received message from topic ",message.topic," =",str(message.payload.decode("utf-8")))
-        print()
+    global ID
+    print("received message from topic ",message.topic," =",str(message.payload.decode("utf-8")))
+    print()
+    if(message.topic=="/oneM2M/resp/BTNodeInit/Mobius2"):
+        msg_json = json.loads(message.payload.decode('utf-8'))
+        dev_list = msg_json["pc"]["m2m:uril"]
+        id_list = []
+        for dev in dev_list:
+            node = re.search(r'(?<=Mobius[/]BTNode)(\w+)',dev)
+            if node != None:
+                id_list.append(int(node.group(0)))
+        print("Existing Nodes ID: ",id_list)
+        max_id = max(id_list)
+        ID = max_id+1
+        print("New Node ID: BTNode"+str(ID))
 
 
 
 # Common message structure
 common_msg = {}
 
-common_msg["to"]=csi[:-1]
+common_msg["to"]=csi
 common_msg["fr"]=AE_id_base+"init"
 common_msg["rqi"]=rqi
 
@@ -123,8 +139,7 @@ client.on_message=on_message
 #####
 
 
-topic_init_pub = "/oneM2M/req/"+AE_id_base+"Init/" + csi + "/json"
-topic_init_sub = "/oneM2M/resp/"+AE_id_base+"Init/+"
+
 
 # Initial discovery of AEs in prder to give an ID to  this AE if first time
 
@@ -133,32 +148,57 @@ print()
 
 client.connect(broker,port)#connect
 client.loop_start() #start loop to process received messages
-client.subscribe(topic_init_sub) #subscribe
 
-# Create retrieve message for discovery
-fc = {}
-fc["fu"]=1
-fc["ty"]=2
 
-rve_msg = message_discover(common_msg,csi[:-1],fc)
-client.publish(topic_init_pub,rve_msg) #publish
-time.sleep(1)
+try:
+    with open("ID.json") as f:
+        id_json = json.load(f)
+        print(id_json);print();
+        ID = id_json["id"]
+        new_Node = False
+except:
+    print("This device has no ID")
+    print("Updating device ID...");print()
 
-##########################################################
-'''
-TODO: Code for automatize node ID from retrieve response
-'''
-##########################################################
+    topic_init_pub = "/oneM2M/req/"+AE_id_base+"Init/" + csi_mqtt + "/json"
+    topic_init_sub = "/oneM2M/resp/"+AE_id_base+"Init/+"
+    # Initial discovery of AEs in prder to give an ID to  this AE if first time
+
+
+
+    client.subscribe(topic_init_sub) #subscribe
+
+    # Create retrieve message for discovery
+    fc = {}
+    fc["fu"]=1
+    fc["ty"]=2
+
+    rve_msg = message_discover(common_msg,csi,fc)
+    while(ID == None):
+        client.publish(topic_init_pub,rve_msg) #publish
+        time.sleep(5)
+
+    # Save new ID in ID.json file
+    print("Saving new ID in ID.josn file...")
+    with open("ID.json","w") as f:
+        json_id = {}
+        json_id["id"] = ID
+        f.write(json.dumps(json_id))
+        print("New ID saved!")
+
+    client.unsubscribe(topic_init_sub)
+
+    new_Node = True
 
 client.unsubscribe(topic_init_sub)
 
-id = 1
 
-AE_id = AE_id_base + str(id)
+
+AE_id = AE_id_base + str(ID)
 
 rn = AE_id
 
-
+common_msg["fr"]=AE_id
 
 
 ###############
@@ -169,8 +209,8 @@ topic_sub2 = "/oneM2M/req/+/"+AE_id+"/+"
 topic_sub3 = "/oneM2M/reg_resp/"+AE_id+"/+"
 
 
-topic_pub = "/oneM2M/req/"+AE_id + "/" +csi + "/json"
-topic_reg = "/oneM2M/reg_req/"+AE_id + "/" +csi + "/json"
+topic_pub = "/oneM2M/req/"+AE_id + "/" +csi_mqtt + "/json"
+topic_reg = "/oneM2M/reg_req/"+AE_id + "/" +csi_mqtt + "/json"
 
 
 
@@ -178,24 +218,28 @@ client.subscribe(topic_sub1) #subscribe
 client.subscribe(topic_sub2)
 client.subscribe(topic_sub3)
 
-api = "BluetoothDetector"
-crt_msg = message_register(common_msg,csi[:-1],rn,api)
-
-# Publish
-print("Registering: ", crt_msg)
-print()
-client.publish(topic_reg,crt_msg) #publish
-time.sleep(1)
-
 rn_cnt1 = "new_dev"
 rn_cnt2 = "lost_dev"
-mni = 100
-cnt_msg1 = message_container_creation(common_msg,csi[:-1]+"/"+rn,rn_cnt1,mni)
-cnt_msg2 = message_container_creation(common_msg,csi[:-1]+"/"+rn,rn_cnt2,mni)
-client.publish(topic_pub,cnt_msg1) #publish
-time.sleep(1)
 
-client.publish(topic_reg,cnt_msg2) #publish
+if(new_Node == True):
+
+    api = "BluetoothDetector"
+    crt_msg = message_register(common_msg,csi,rn,api)
+
+    # Publish
+    print("Registering: ", crt_msg)
+    print()
+    client.publish(topic_reg,crt_msg) #publish
+    time.sleep(1)
+
+
+    mni = 100
+    cnt_msg1 = message_container_creation(common_msg,csi+"/"+rn,rn_cnt1,mni)
+    cnt_msg2 = message_container_creation(common_msg,csi+"/"+rn,rn_cnt2,mni)
+    client.publish(topic_pub,cnt_msg1) #publish
+    time.sleep(1)
+
+    client.publish(topic_reg,cnt_msg2) #publish
 
 
 ##########
@@ -207,7 +251,7 @@ client.publish(topic_reg,cnt_msg2) #publish
 
 time.sleep(4)
 
-pub_msg = json.loads(message_resource_creation(common_msg,csi[:-1]+'/'+AE_id+'/'+rn_cnt1,[]))
+pub_msg = json.loads(message_resource_creation(common_msg,csi+'/'+AE_id+'/'+rn_cnt1,[]))
 print(pub_msg)
 
 with open('file.test','r+') as f:
