@@ -8,7 +8,7 @@ import time
 import json
 
 # Common values
-broker="127.0.0.1"
+broker="10.10.10.114"
 port=1883
 
 global ID
@@ -118,7 +118,10 @@ def on_message(client, userdata, message):
             if node != None:
                 id_list.append(int(node.group(0)))
         print("Existing Nodes ID: ",id_list)
-        max_id = max(id_list)
+        if id_list:
+            max_id = max(id_list)
+        else:
+            max_id = 0
         ID = max_id+1
         print("New Node ID: BTNode"+str(ID))
 
@@ -152,7 +155,7 @@ client.loop_start() #start loop to process received messages
 
 try:
     with open("ID.json") as f:
-        id_json = json.load(f)
+        id_json = json.loads(f)
         print(id_json);print();
         ID = id_json["id"]
         new_Node = False
