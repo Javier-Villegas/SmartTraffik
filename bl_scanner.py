@@ -9,6 +9,7 @@ import json
 
 # Common values
 broker="10.10.10.114"
+#broker="127.0.0.1"
 port=1883
 
 global ID
@@ -85,6 +86,36 @@ def message_resource_creation(common_msg,to,content):
         print()
 
         return msg_json
+
+
+def message_subscription_creation(common_msg,to,sub_name,uri):
+        msg = common_msg.copy()
+        msg["to"] = to
+        msg["op"] = 1
+        msg["ty"] = 23 # content instance
+        pc = {}
+
+        sub = {}
+        sub["rn"] = sub_name
+
+        enc = {}
+        enc["net"] = [3]
+
+        sub["enc"] = enc
+        sub["nu"] = uri
+        sub["nct"] = 1
+
+        pc["m2m:sub"] = sub
+
+        msg["pc"] = pc
+
+        msg_json = json.dumps(msg)
+
+        print("Message for creating resource: ",msg_json)
+        print()
+
+        return msg_json
+
 
 
 def message_discover(common_msg,to,fc):
@@ -193,7 +224,7 @@ except:
 
     new_Node = True
 
-client.unsubscribe(topic_init_sub)
+    client.unsubscribe(topic_init_sub)
 
 
 
@@ -243,6 +274,29 @@ if(new_Node == True):
     time.sleep(1)
 
     client.publish(topic_reg,cnt_msg2) #publish
+
+    time.sleep(1)
+
+    # Creating subscription
+    sub_name = "New_dev_sub"
+    uri = ["http://127.0.0.1:7000?ct=json"]
+    
+    sub_msg = message_subscription_creation(common_msg,csi+"/"+rn+"/"+rn_cnt1,sub_name,uri)
+    print("Sending creation sub message: ", sub_msg)
+    client.publish(topic_pub,sub_msg)
+
+    time.sleep(2)
+
+    # Checking if the subscription has been created
+    fc = {}
+    fc["fu"]=1
+    fc["ty"]=23
+    common_msg["rqi"]="1244"
+
+    rve_msg = message_discover(common_msg,csi,fc)
+    client.publish(topic_pub,rve_msg)
+    time.sleep(1)
+
 
 
 ##########
