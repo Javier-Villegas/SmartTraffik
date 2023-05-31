@@ -24,7 +24,7 @@ AE_id_base = "BTNode"
 csi = "Mobius" # CSE-ID
 csi_mqtt = "Mobius2" # CSE-ID for MQTT topics
 #rn = "maoriot-cse-in"
-rqi = "test_rqi"
+rqi = str(randint(0,100000))
 
 
 def on_discovery_resp(client,userdata,message):
@@ -51,35 +51,39 @@ def on_discovery_resp(client,userdata,message):
                                    'pc':{'m2m:ae':{
                                         'rn':AE_id, 'api':'BluetoothDetector','rr':True                                       }}}))
         
-        sleep(1)
+        sleep(2)
         print('Container creation')
         
-        print(json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':rqi,'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}}))#publish
+        print(json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}}))#publish
         client.publish(topic_reg,
-                       json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':rqi,'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}})) #publish
-        sleep(1)
+                       json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}})) #publish
+        sleep(2)
         # Creating subscription
         print('Subscription creation')
         sub_name = "New_dev_sub"
-        uri = ["http://127.0.0.1:7000?ct=json"]
-        
-        #sub_msg = message_subscription_creation(common_msg,csi+"/"+rn+"/"+rn_cnt1,sub_name,uri)
-        #print("Sending creation sub message: ", sub_msg)
+        #uri = ["http://10.10.10.114:7000?ct=json"]
+        #uri = ["http://10.10.10.244:7000?ct=json"]
+        #
+        ##sub_msg = message_subscription_creation(common_msg,csi+"/"+rn+"/"+rn_cnt1,sub_name,uri)
+        ##print("Sending creation sub message: ", sub_msg)
 
-        print(json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
-                                   'pc':{'m2m:sub':{
-                                       'rn':sub_name,'nu':uri,'enc':{'net':[3]}, 'nct':1,
-                                       }}}))
-        client.publish(topic_pub,
-                       json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
-                                   'pc':{'m2m:sub':{
-                                       'rn':sub_name,'enc':{'net':[3]},'nu':uri, 'nct':1,
-                                       }}})) #publish
-        sleep(1)
-        print('Subscription test')
-        client.publish(topic_pub,
-                       json.dumps({'to':csi,'fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1,'ty':23}}))
-        sleep(1) 
+        #print(json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
+        #                           'pc':{'m2m:sub':{
+        #                               'rn':sub_name,'nu':uri,'enc':{'net':[3]}, 'nct':1,
+        #                               }}}))
+        #client.publish(topic_pub,
+        #               json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
+        #                           'pc':{'m2m:sub':{
+        #                               'rn':sub_name,'enc':{'net':[3]},'nu':uri, 'nct':1,
+        #                               }}})) #publish
+        #sleep(2)
+        #print('Subscription test')
+        #client.publish(topic_pub,
+        #               json.dumps({'to':csi,'fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1,'ty':23}}))
+        #sleep(2) 
+        #client.publish(topic_pub,
+        #               json.dumps({'to':csi+'/'+AE_id+'/new_dev/New_dev_sub','fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1}}))
+        #sleep(2) 
 
 
 #define callback
@@ -142,7 +146,7 @@ client.subscribe(topic_sub1) #subscribe
 client.subscribe(topic_sub2)
 client.subscribe(topic_sub3)
 client.publish('/oneM2M/req/BTNodeInit/Mobius2/json',
-               json.dumps({'to':csi,'fr':AE_id,'rqi':rqi,'op':2,'fc':{'fu':1,'ty':2}}))
+               json.dumps({'to':csi,'fr':AE_id,'rqi':AE_id,'op':2,'fc':{'fu':1,'ty':2}}))
 
 sleep(5)
 
