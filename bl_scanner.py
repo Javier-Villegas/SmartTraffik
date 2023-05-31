@@ -62,27 +62,27 @@ def on_discovery_resp(client,userdata,message):
         print('Subscription creation')
         sub_name = "New_dev_sub"
         #uri = ["http://10.10.10.114:7000?ct=json"]
-        #uri = ["http://10.10.10.244:7000?ct=json"]
+        uri = ["mqtt://10.10.10.114:1883"]
         #
         ##sub_msg = message_subscription_creation(common_msg,csi+"/"+rn+"/"+rn_cnt1,sub_name,uri)
         ##print("Sending creation sub message: ", sub_msg)
 
-        #print(json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
-        #                           'pc':{'m2m:sub':{
-        #                               'rn':sub_name,'nu':uri,'enc':{'net':[3]}, 'nct':1,
-        #                               }}}))
-        #client.publish(topic_pub,
-        #               json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
-        #                           'pc':{'m2m:sub':{
-        #                               'rn':sub_name,'enc':{'net':[3]},'nu':uri, 'nct':1,
-        #                               }}})) #publish
+        print(json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
+                                   'pc':{'m2m:sub':{
+                                       'rn':sub_name,'nu':[uri[0]+'/'+sub_name],'enc':{'net':[3]}, 'nct':1,
+                                       }}}))
+        client.publish(topic_pub,
+                       json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
+                                   'pc':{'m2m:sub':{
+                                       'rn':sub_name,'enc':{'net':[1]},'nu':[uri[0]+'/'+sub_name], 'nct':1,
+                                       }}})) #publish
         #sleep(2)
-        #print('Subscription test')
-        #client.publish(topic_pub,
-        #               json.dumps({'to':csi,'fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1,'ty':23}}))
-        #sleep(2) 
-        #client.publish(topic_pub,
-        #               json.dumps({'to':csi+'/'+AE_id+'/new_dev/New_dev_sub','fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1}}))
+        print('Subscription test')
+        client.publish(topic_pub,
+                       json.dumps({'to':csi,'fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1,'ty':23}}))
+        sleep(2) 
+        client.publish(topic_pub,
+                       json.dumps({'to':csi+'/'+AE_id+'/new_dev/New_dev_sub','fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1}}))
         #sleep(2) 
 
 
