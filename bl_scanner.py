@@ -55,7 +55,7 @@ def on_discovery_resp(client,userdata,message):
         print('Container creation')
         
         print(json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}}))#publish
-        client.publish(topic_reg,
+        client.publish(topic_pub,
                        json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}})) #publish
         sleep(2)
         # Creating subscription
