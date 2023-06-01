@@ -83,7 +83,7 @@ def on_data_update(client, userdata, message):
                                   'rqi': msg['rqi'],
                                   'rsc': 2000 })) # rsc: 2xxx request received and done, 1xxx request received but in progress
     idx = msg['pc']['m2m:sgn']['sur'].split('/')[-2]
-    last[idx] = msg['pc']['m2m:sgn']['nev']['rep']['m2m:cin']['con']
+    last[idx] = float(msg['pc']['m2m:sgn']['nev']['rep']['m2m:cin']['con'])
     data[idx].append(last[idx])
 
 
@@ -101,7 +101,7 @@ watch_pair = [('202481601211147','202481586606346'),
 watch_pair = watch_pair[int(sys.argv[2])]
 watch_pair = ['_to_'.join(watch_pair), '_to_'.join(watch_pair[::-1])]
 data = {watch_pair[0]:[],watch_pair[1]:[]}
-last = {watch_pair[0]:0,watch_pair[1]:0}
+last = {watch_pair[0]:.0,watch_pair[1]:.0}
 
 
 server_address = '10.10.10.114'
@@ -144,8 +144,8 @@ sleep(2)
 cell_on = False
 client.loop_start()
 while(True):
-    data[watch_pair[0]] = [x for x in data[watch_pair[0]] if x > last[watch_pair[0]]-60000]
-    data[watch_pair[1]] = [x for x in data[watch_pair[1]] if x > last[watch_pair[1]]-60000]
+    data[watch_pair[0]] = [x for x in data[watch_pair[0]] if x > last[watch_pair[0]]-60]
+    data[watch_pair[1]] = [x for x in data[watch_pair[1]] if x > last[watch_pair[1]]-60]
 
     print(f'{watch_pair[0]}: {len(data[watch_pair[0]])} devices/min')
     print(f'{watch_pair[1]}: {len(data[watch_pair[1]])} devices/min')
@@ -160,8 +160,8 @@ while(True):
         pass
         
     
-    last[watch_pair[0]] += 100
-    last[watch_pair[1]] += 100
+    last[watch_pair[0]] += 0.1
+    last[watch_pair[1]] += 0.1
     sleep(0.1)
 
 client.loop_forever()
