@@ -3,7 +3,7 @@ from components.elements.charts.chart import *
 from data.globalVariables import *
 
 
-def getDataVR():
+def getData():
     global IP
     global PORT
     base = "http://" + IP['rest'] + ":" + PORT['rest']
@@ -33,7 +33,9 @@ def update_VRdata(n):
     global datVR # Get global variable
     global nIVR
 
-    d = getDataVR() # Get Data from the REST
+    d = getData() # Get Data from the AEs
+
+    # d should be a dict/json with the following parameters: BTNode_1, BTNode_2, RIC_1 and RIC_2
     if (d != {}):
         nIVR = n
         now = datetime.now()
