@@ -77,7 +77,7 @@ def on_data_update(client, userdata, message):
     print(message.topic)
     print(message.payload)
     msg = json.loads(message.payload)
-    client.publish('/oneM2M/resp/Mobius2/MAORIOT-AE/json',
+    client.publish('/oneM2M/resp/Mobius2/{AE_id}/json',
                       json.dumps({'to':csi,
                                   'fr':AE_id,
                                   'rqi': msg['rqi'],
@@ -113,18 +113,18 @@ client = Client()
 client.connect(server_address)
 client.on_message = on_message
 
-client.subscribe(f'/oneM2M/reg_resp/{AE_id}/+')
-client.subscribe(f'/oneM2M/resp/{AE_id}/+')
+client.subscribe(f'/oneM2M/reg_resp/{AE_id}/Mobius2/+')
+client.subscribe(f'/oneM2M/resp/{AE_id}/Mobius2/+')
 client.subscribe(f'/oneM2M/req/+/{AE_id}/+')
 client.message_callback_add(f'/oneM2M/req/Mobius2/{AE_id}/json',on_data_update)
 
 client.message_callback_add(f'/oneM2M/resp/{AE_id}Init/Mobius2/json',on_ric_discovery)
-client.message_callback_add(f'/oneM2M/resp/MAORIOT-AE/Mobius2/json',on_discovery)
+client.message_callback_add(f'/oneM2M/resp/{AE_id}/Mobius2/json',on_discovery)
 client.subscribe(f'/oneM2M/resp/{AE_id}Init/Mobius2/json')
-client.subscribe(f'/oneM2M/resp/MAORIOT-AE/Mobius2/json')
+client.subscribe(f'/oneM2M/resp/{AE_id}/Mobius2/json')
 
 
-client.publish(f'/oneM2M/{AE_id}Init/Mobius2/json',
+client.publish(f'/oneM2M/req/{AE_id}Init/Mobius2/json',
                json.dumps({'to':csi,
                            'fr':AE_id,
                            'rqi':f'{AE_id}_discovery_{str(int(randint(0,100000)))}',
@@ -132,7 +132,7 @@ client.publish(f'/oneM2M/{AE_id}Init/Mobius2/json',
                            'fc':{'fu':1,'ty':2}}))
 sleep(2)
 rqi = f'{AE_id}_{str(randint(0,10000))}'
-client.publish('/oneM2M/req/MAORIOT-AE/Mobius2/json',
+client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',
                json.dumps({'to':'Mobius/MAORIOT-AE',
                            'fr':AE_id,
                            'rqi':rqi,

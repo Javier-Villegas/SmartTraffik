@@ -32,13 +32,17 @@ def on_discovery_resp(client,userdata,message):
     print("received message from topic ",message.topic," =",str(message.payload.decode("utf-8")))
     print()
     msg_json = json.loads(message.payload.decode('utf-8'))
-    dev_list = msg_json["pc"]["m2m:uril"]
+    if msg_json.get('pc') and msg_json['pc'].get('m2m:uril'):
+        dev_list = msg_json["pc"]["m2m:uril"]
+    else:
+        dev_list = []
     id_list = []
+    print(dev_list)
     for dev in dev_list:
         node = re.search(r'(?<=Mobius[/]BTNode)(\w+)',dev)
         if node != None:
             id_list.append(int(node.group(0)))
-    if ID in id_list:
+    if int(ID) in id_list:
         print('Reconnecting...')
 
     else:
@@ -47,42 +51,39 @@ def on_discovery_resp(client,userdata,message):
         topic_reg = "/oneM2M/reg_req/"+AE_id + "/" +csi_mqtt + "/json"
         print('AE registration')
         client.publish(topic_reg,
-                       json.dumps({'to':csi,'fr':AE_id,'rqi':rqi,'op':1,'ty':2,
+                       json.dumps({'to':csi,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':2,
                                    'pc':{'m2m:ae':{
                                         'rn':AE_id, 'api':'BluetoothDetector','rr':True                                       }}}))
         
-        sleep(2)
         print('Container creation')
         
-        print(json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}}))#publish
         client.publish(topic_pub,
                        json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}})) #publish
-        sleep(2)
         # Creating subscription
-        print('Subscription creation')
-        sub_name = "New_dev_sub"
+        #print('Subscription creation')
+        #sub_name = "New_dev_sub"
         #uri = ["http://10.10.10.114:7000?ct=json"]
-        uri = ["mqtt://10.10.10.114:1883"]
+        #uri = ["mqtt://10.10.10.114:1883"]
         #
         ##sub_msg = message_subscription_creation(common_msg,csi+"/"+rn+"/"+rn_cnt1,sub_name,uri)
         ##print("Sending creation sub message: ", sub_msg)
 
-        print(json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
-                                   'pc':{'m2m:sub':{
-                                       'rn':sub_name,'nu':[uri[0]+'/'+sub_name],'enc':{'net':[3]}, 'nct':1,
-                                       }}}))
-        client.publish(topic_pub,
-                       json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':rqi,'op':1,'ty':23,
-                                   'pc':{'m2m:sub':{
-                                       'rn':sub_name,'enc':{'net':[1]},'nu':[uri[0]+'/'+sub_name], 'nct':1,
-                                       }}})) #publish
+        #print(json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':23,
+        #                           'pc':{'m2m:sub':{
+        #                               'rn':sub_name,'nu':[uri[0]+'/'+sub_name],'enc':{'net':[3]}, 'nct':1,
+        #                               }}}))
+        #client.publish(topic_pub,
+        #               json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':23,
+        #                           'pc':{'m2m:sub':{
+        #                               'rn':sub_name,'enc':{'net':[1]},'nu':[uri[0]+'/'+sub_name], 'nct':1,
+        #                               }}})) #publish
         #sleep(2)
-        print('Subscription test')
-        client.publish(topic_pub,
-                       json.dumps({'to':csi,'fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1,'ty':23}}))
-        sleep(2) 
-        client.publish(topic_pub,
-                       json.dumps({'to':csi+'/'+AE_id+'/new_dev/New_dev_sub','fr':AE_id,'rqi':'1244','op':2,'fc':{'fu':1}}))
+        #print('Subscription test')
+        #client.publish(topic_pub,
+        #               json.dumps({'to':csi,'fr':AE_id,'rqi':str(randint(0,100000)),'op':2,'fc':{'fu':1,'ty':23}}))
+        #sleep(2) 
+        #client.publish(topic_pub,
+        #               json.dumps({'to':csi+'/'+AE_id+'/new_dev/New_dev_sub','fr':AE_id,'rqi':str(randint(0,100000)),'op':2,'fc':{'fu':1}}))
         #sleep(2) 
 
 
@@ -146,9 +147,8 @@ client.subscribe(topic_sub1) #subscribe
 client.subscribe(topic_sub2)
 client.subscribe(topic_sub3)
 client.publish('/oneM2M/req/BTNodeInit/Mobius2/json',
-               json.dumps({'to':csi,'fr':AE_id,'rqi':AE_id,'op':2,'fc':{'fu':1,'ty':2}}))
+               json.dumps({'to':csi,'fr':AE_id,'rqi':AE_id+'Init','op':2,'fc':{'fu':1,'ty':2}}))
 
-sleep(5)
 
 #AE_id = AE_id_base + str(ID)
 
