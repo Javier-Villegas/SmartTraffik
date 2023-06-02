@@ -5,6 +5,7 @@ from time import sleep
 from random import randint
 
 def on_ric_discovery(client, userdata, message):
+    print()
     print('ric discovery')
     print(message.topic)
     print(message.payload)
@@ -29,6 +30,7 @@ def on_ric_discovery(client, userdata, message):
 
 
 def on_discovery(client, userdata, message):
+    print()
     print('on discovery')
     print(message.topic)
     print(message.payload)
@@ -73,6 +75,7 @@ def on_discovery(client, userdata, message):
 
 def on_data_update(client, userdata, message):
     global last
+    print()
     print('New data')
     print(message.topic)
     print(message.payload)
@@ -130,7 +133,6 @@ client.publish(f'/oneM2M/req/{AE_id}Init/Mobius2/json',
                            'rqi':f'{AE_id}_discovery_{str(int(randint(0,100000)))}',
                            'op':2,
                            'fc':{'fu':1,'ty':2}}))
-sleep(2)
 rqi = f'{AE_id}_{str(randint(0,10000))}'
 client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',
                json.dumps({'to':'Mobius/MAORIOT-AE',
@@ -162,7 +164,7 @@ while(True):
     
     last[watch_pair[0]] += 0.1
     last[watch_pair[1]] += 0.1
-    sleep(0.1)
+    sleep(1)
 
 client.loop_forever()
 
