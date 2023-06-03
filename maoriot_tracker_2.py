@@ -18,6 +18,16 @@ def on_discovery(client,userdata,msg):
     print(msg.payload)
     msg_json = json.loads(msg.payload.decode('utf-8'))
     registered = False
+    if msg_json.get('rqi') and msg_json['rqi'].startswith('BTNodeInit') and f'{csi}/{msg_json['fr']}' not in subscriptions:
+        mqttc.publish('/oneM2M/req/MAORIOT-AE/Mobius2/json',
+                      json.dumps({'to':f'{csi}/{msg_json["fr"]}/new_dev','fr': 'MAORIOT-AE','rqi': str(randint(0,10000)),'op':1,'ty':23,
+                                    'pc':{'m2m:sub':{
+                                        'rn': 'New_dev_sub','nu': ["mqtt:/MAORIOT-AE"] , 'nct':1,
+                                        'enc':{
+                                            'net':[3],
+                                        }}}}))
+        subscriptions.add(f'{csi}/{msg_json["fr"]}')
+        
     for uri in set(msg_json['pc']['m2m:uril']).difference(subscriptions):
         if(uri == "Mobius/MAORIOT-AE"):
             registered = True
