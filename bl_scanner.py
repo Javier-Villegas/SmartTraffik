@@ -1,7 +1,6 @@
 import paho.mqtt.client as paho
 import re
 from time import sleep
-from hashlib import md5
 from datetime import datetime
 from ast import literal_eval
 import time
@@ -57,34 +56,12 @@ def on_discovery_resp(client,userdata,message):
         
         print('Container creation')
         
+        # New devs
         client.publish(topic_pub,
                        json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}})) #publish
-        # Creating subscription
-        #print('Subscription creation')
-        #sub_name = "New_dev_sub"
-        #uri = ["http://10.10.10.114:7000?ct=json"]
-        #uri = ["mqtt://10.10.10.114:1883"]
-        #
-        ##sub_msg = message_subscription_creation(common_msg,csi+"/"+rn+"/"+rn_cnt1,sub_name,uri)
-        ##print("Sending creation sub message: ", sub_msg)
-
-        #print(json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':23,
-        #                           'pc':{'m2m:sub':{
-        #                               'rn':sub_name,'nu':[uri[0]+'/'+sub_name],'enc':{'net':[3]}, 'nct':1,
-        #                               }}}))
-        #client.publish(topic_pub,
-        #               json.dumps({'to':csi+'/'+AE_id+'/'+'new_dev','fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':23,
-        #                           'pc':{'m2m:sub':{
-        #                               'rn':sub_name,'enc':{'net':[1]},'nu':[uri[0]+'/'+sub_name], 'nct':1,
-        #                               }}})) #publish
-        #sleep(2)
-        #print('Subscription test')
-        #client.publish(topic_pub,
-        #               json.dumps({'to':csi,'fr':AE_id,'rqi':str(randint(0,100000)),'op':2,'fc':{'fu':1,'ty':23}}))
-        #sleep(2) 
-        #client.publish(topic_pub,
-        #               json.dumps({'to':csi+'/'+AE_id+'/new_dev/New_dev_sub','fr':AE_id,'rqi':str(randint(0,100000)),'op':2,'fc':{'fu':1}}))
-        #sleep(2) 
+        # Del devs
+        client.publish(topic_pub,
+                       json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'del_dev','mni':100}}})) #publish
 
 
 #define callback
@@ -93,22 +70,6 @@ def on_message(client, userdata, message):
     global ID
     print("received message from topic ",message.topic," =",str(message.payload.decode("utf-8")))
     print()
-    #if(message.topic=="/oneM2M/resp/BTNodeInit/Mobius2"):
-    #    msg_json = json.loads(message.payload.decode('utf-8'))
-    #    dev_list = msg_json["pc"]["m2m:uril"]
-    #    id_list = []
-    #    for dev in dev_list:
-    #        node = re.search(r'(?<=Mobius[/]BTNode)(\w+)',dev)
-    #        if node != None:
-    #            id_list.append(int(node.group(0)))
-    #    print("Existing Nodes ID: ",id_list)
-    #    if id_list:
-    #        max_id = max(id_list)
-    #    else:
-    #        max_id = 0
-    #    ID = max_id+1
-    #    print("New Node ID: BTNode"+str(ID))
-
 
 
 # Common message structure
@@ -180,8 +141,9 @@ client.subscribe(topic_sub3)
 
 time.sleep(4)
 
-pub_msg = {'to':csi+'/'+AE_id+'/new_dev','fr':AE_id,'op':1,'rqi':rqi,'ty':4,'pc':{'m2m:cin':{'con':{}}}}
-print(pub_msg)
+new_msg = {'to':csi+'/'+AE_id+'/new_dev','fr':AE_id,'op':1,'rqi':rqi,'ty':4,'pc':{'m2m:cin':{'con':{}}}}
+del_msg = new_msg.copy()
+del_msg['to'] = f'{csi}/{AE_id}/del_dev'
 
 with open('file.test','r+') as f:
     while True:
@@ -194,15 +156,16 @@ with open('file.test','r+') as f:
         
                 if 'NEW' in newline:
                     mac = "0x" + match.group(0).replace(":","")
-                    print(mac)
-                    print(int(literal_eval(mac)))
-
-                    print(f'[{datetime.now()}] New device: {match.group(0)} (md5: {md5(match.group(0).encode()).hexdigest()})')
-                    pub_msg['rqi'] = str(randint(0,1000000))
-                    pub_msg['pc']['m2m:cin']['con'] = int(mac,16)
-                    client.publish(topic_pub, json.dumps(pub_msg))
+                    print(f'[{datetime.now()}] New device: {match.group(0)}')
+                    new_msg['rqi'] = str(randint(0,1000000))
+                    new_msg['pc']['m2m:cin']['con'] = int(mac,16)
+                    client.publish(topic_pub, json.dumps(new_msg))
                 elif 'DEL' in newline:
-                    print(f'[{datetime.now()}] Device deleted: {match.group(0)} (md5: {md5(match.group(0).encode()).hexdigest()})')
+                    mac = "0x" + match.group(0).replace(":","")
+                    print(f'[{datetime.now()}] Device deleted: {match.group(0)}')
+                    del_msg['rqi'] = str(randint(0,1000000))
+                    del_msg['pc']['m2m:cin']['con'] = int(mac,16)
+                    client.publish(topic_pub, json.dumps(del_msg))
         else:
             f.truncate(0)
         
