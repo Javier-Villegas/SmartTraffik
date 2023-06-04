@@ -105,7 +105,7 @@ def on_message(client, userdata, msg):
 
     
 
-    if(msg_json['rqi']=="discover_pairs"):
+    if(msg_json['rqi'].startswith("discover_pairs")):
         for uri in set(msg_json['pc']['m2m:uril']).difference(pairs):
             if("_to_" in uri):
                 pairs.add(uri)
@@ -140,7 +140,7 @@ mqttc.publish('/oneM2M/req/BTNodeInit/Mobius2/json',
                json.dumps({'to':csi,'fr':'MAORIOT-AE','rqi':str(randint(0,1000)),'op':2,'fc':{'fu':1,'ty':2}}))
 
 mqttc.publish('/oneM2M/req/MAORIOT-AE/Mobius2/json',
-              json.dumps({'to':csi+'/MAORIOT-AE','fr':'MAORIOT-AE','rqi':"discover_pairs",'op':2,'fc':{'fu':1,'ty':3}}))
+              json.dumps({'to':csi+'/MAORIOT-AE','fr':'MAORIOT-AE','rqi':"discover_pairs"+str(randint(0,100000)),'op':2,'fc':{'fu':1,'ty':3}}))
 
 #mqttc.subscribe('/oneM2M/req/+/Mobius2/+',qos=0)
 
