@@ -81,7 +81,7 @@ common_msg["rqi"]=rqi
 
 
 
-client= paho.Client("client-001") #create client object client1.on_publish = on_publish #assign function to callback client1.connect(broker,port) #establish connection client1.publish("house/bulb1","on")
+client= paho.Client() #create client object client1.on_publish = on_publish #assign function to callback client1.connect(broker,port) #establish connection client1.publish("house/bulb1","on")
 client.message_callback_add('/oneM2M/resp/BTNodeInit/Mobius2',on_discovery_resp)
 ######Bind function to callback
 client.on_message=on_message
@@ -128,9 +128,9 @@ topic_reg = "/oneM2M/reg_req/"+AE_id + "/" +csi_mqtt + "/json"
 
 
 
-client.subscribe(topic_sub1) #subscribe
-client.subscribe(topic_sub2)
-client.subscribe(topic_sub3)
+#client.subscribe(topic_sub1) #subscribe
+#client.subscribe(topic_sub2)
+#client.subscribe(topic_sub3)
 
 ##########
 # use "def message_resource_creation(common_msg,to,content):" to send the devices to Mobius
@@ -151,7 +151,9 @@ with open('file.test','r+') as f:
 
         newlines = f.readlines()
         if newlines:
-            for newline in newlines:
+            for i,newline in enumerate(newlines):
+                for _ in range(sleeps[i])
+                sleep(0.1)
                 match = re.search(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})',newline)
         
                 if 'NEW' in newline:
@@ -166,10 +168,13 @@ with open('file.test','r+') as f:
                     del_msg['rqi'] = str(randint(0,1000000))
                     del_msg['pc']['m2m:cin']['con'] = int(mac,16)
                     client.publish(topic_pub, json.dumps(del_msg))
+
         else:
             f.truncate(0)
+        break
         
 
-
+while True:
+    pass
 client.disconnect() #disconnect
 client.loop_stop() #stop loop
