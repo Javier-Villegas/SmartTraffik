@@ -21,22 +21,22 @@ content = html.Div(id = "measuresContent", children = [
 
     dbc.Row(
             [
-                chartS(id = "chart_f1", menu = dropMenuCharts, initialValue = "BTNode_1"),
-                chartS(id = "chart_f2", menu = dropMenuCharts, initialValue = "BTNode_2")
+                chartS(id = "_f1", menu = dropMenuCharts, initialValue = "BTNode202481601211147"),
+                chartS(id = "_f2", menu = dropMenuCharts, initialValue = "BTNode202481601211147")
             ]
              ),
 
     dbc.Row(
             [
-                chartS(id = "chart_f3",menu = dropMenuCharts, initialValue = "Traffic_pattern_1"),
-                chartS(id = "chart_f4",menu = dropMenuCharts, initialValue = "Traffic_pattern_2"),
+                chartS(id = "_f3",menu = dropMenuCharts, initialValue = "202481601211147_to_202481586606346"),
+                chartS(id = "_f4",menu = dropMenuCharts, initialValue = "202481586606346_to_202481601211147"),
 
             ]
             ),
 
     dbc.Row(
             [
-                chartS(id = "chart_f5", menu = dropMenuCharts, initialValue = "Cell_status"),
+                chartS(id = "_f5", menu = dropMenuCharts, initialValue = "Cell_status"),
             ]
             )
 

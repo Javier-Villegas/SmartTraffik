@@ -3,6 +3,7 @@ from components.elements.menus.menu_nav import *
 from pagesManagement import *
 import dash_daq as daq
 
+
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 
 # PAGE CONTENT STYLE (CSS)
@@ -86,7 +87,7 @@ app.layout = dbc.Container([
 app.callback(Output('page-content', 'children'), [Input('url', 'pathname')])(display_page)
 
 # VR chart update
-for graph in range(1,6):
+for graph in range(1,5):
     app.callback(Output('chart_f' + str(graph),'figure'),
                  Input('varVRData', 'children'),
 
@@ -97,6 +98,8 @@ for graph in range(1,6):
 app.callback(Output('varVRData', 'children'),
              Input('timerVR', 'n_intervals')
              )(update_VRdata)
+
+
 
 # Callback for slider value-changing
 app.callback(Output('timerVR', 'interval'),
