@@ -23,6 +23,16 @@ def on_ric_discovery(client, userdata, message):
                                         'api':'RIC-Actuator',
                                         'rr':True
                                        }}}))
+            client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',
+                           json.dumps({'to':f'{csi}/{AE_id:}',
+                                   'fr':AE_id,
+                                   'rqi':AE_id+str(int(randint(0,10000))),
+                                   'op':1,
+                                   'ty':3,
+                                   'pc':{'m2m:cnt':{
+                                        'rn':'cell_status',
+                                        'mni':100
+                                       }}}))
         else:
             print('Reconnecting')
 
@@ -144,6 +154,16 @@ sleep(2)
 
 
 cell_on = False
+
+cell_cin= {'to':'Mobius/{AE_id}/cell_status',
+           'fr':AE_id,
+           'rqi':str(randint(0,100000)),
+           'op':1,
+           'ty':4,
+           'pc':{'m2m:cin':{'con':cell_on} 
+            }
+           }
+client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',json.dumps(cell_cin))
 client.loop_start()
 while(True):
     data[watch_pair[0]] = [x for x in data[watch_pair[0]] if x > last[watch_pair[0]]-60]
@@ -152,18 +172,27 @@ while(True):
     print(f'{watch_pair[0]}: {len(data[watch_pair[0]])} devices/min')
     print(f'{watch_pair[1]}: {len(data[watch_pair[1]])} devices/min')
 
-    if True:
-        pass
-    if len(data[watch_pair[0]])+len(data[watch_pair[1]]) > 10 and not cell_on:
+    if len(data[watch_pair[0]])+len(data[watch_pair[1]]) > 1 and not cell_on:
         # Request cell API to turn on
+        print('Turning cell off...')
+        cell_on = True
+        cell_cin['rqi'] = str(randint(0,100000))
+        cell_cin['pc']['m2m:cin']['con'] = cell_on
+        client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',json.dumps(cell_cin))
         pass
-    elif len(data[watch_pair[0]])+len(data[watch_pair[1]]) < 10 and cell_on:
+    elif len(data[watch_pair[0]])+len(data[watch_pair[1]]) <= 0 and cell_on:
+        print('Turning cell on...')
+        cell_on = False
+        cell_cin['rqi'] = str(randint(0,100000))
+        cell_cin['pc']['m2m:cin']['con'] = cell_on
+        client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',json.dumps(cell_cin))
         # Request cell API to turn off
         pass
         
     
     last[watch_pair[0]] += 0.1
     last[watch_pair[1]] += 0.1
+    print()
     sleep(1)
 
 client.loop_forever()
