@@ -152,7 +152,7 @@ with open('file.test','r+') as f:
         newlines = f.readlines()
         if newlines:
             for i,newline in enumerate(newlines):
-                for _ in range(sleeps[i])
+                
                 sleep(0.1)
                 match = re.search(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})',newline)
         
