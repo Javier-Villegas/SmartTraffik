@@ -179,7 +179,8 @@ while(True):
         cell_cin['rqi'] = str(randint(0,100000))
         cell_cin['pc']['m2m:cin']['con'] = cell_on
         client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',json.dumps(cell_cin))
-        pass
+        # Request cell API to turn off
+        os.system('service lte start')
     elif len(data[watch_pair[0]])+len(data[watch_pair[1]]) <= 0 and cell_on:
         print('Turning cell on...')
         cell_on = False
@@ -187,7 +188,8 @@ while(True):
         cell_cin['pc']['m2m:cin']['con'] = cell_on
         client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',json.dumps(cell_cin))
         # Request cell API to turn off
-        pass
+        os.system('service lte stop')
+
         
     
     last[watch_pair[0]] += 0.1
