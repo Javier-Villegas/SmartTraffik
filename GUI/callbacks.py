@@ -6,24 +6,7 @@ from data.globalVariables import *
 def getData():
     global IP
     global PORT
-    base = "http://" + IP['rest'] + ":" + PORT['rest']
-    header = {'content-type': 'application/json'}
-    url = "/data/vr"
-    d = dict()
-
-    try:
-        r = requests.get(base + url, timeout=10, headers=header)
-        return r.json()
-    except:
-        traceback.print_exc()
-        print("REST unavailable")
-        try:
-            print("Second intent")
-            r = requests.get(base + url, timeout=10, headers=header)
-            return r.json()
-        except:
-            print("Something wrong")
-            return {}
+    pass
 
 def update_live_VRgraph(d,value):
     global datVR

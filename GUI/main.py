@@ -5,45 +5,49 @@ import json
 import sys
 from time import sleep
 from random import randint
-
+subscriptions = set()
 
 def on_discovery(client, userdata, msg):
     print('on discovery')
-    print(msg.payload)
+
     msg_json = json.loads(msg.payload.decode('utf-8'))
-    registered = False
-    for uri in set(msg_json['pc']['m2m:uril']).difference(subscriptions):
-        if ("BTNode" in uri):
-            # uri = /Mobius/BTNode_MAC/new_dev
-            aux = uri.split("/")
-            for x in aux:
-                if "BTNode" in x:
-                    nodeName = x
 
-            # Create subscription
-            mqttc.publish('/oneM2M/req/GUI-test/Mobius2/json',
-                          json.dumps(
-                              {'to': uri , 'fr': 'GUI-AE', 'rqi': str(randint(0, 10000)), 'op': 1,
-                               'ty': 23,
-                               'pc': {'m2m:sub': {
-                                   'rn': 'Discover_device_gui', 'nu': ["mqtt:/GUI-AE"], 'nct': 1,
-                                   'enc': {
-                                       'net': [3],
-                                   }}}}))
-            subscriptions.add(uri)
 
-        elif ("MAORIOT-AE" in uri):
-            mqttc.publish('/oneM2M/req/GUI-test/Mobius2/json',
-                          json.dumps(
-                              {'to': uri, 'fr': 'GUI-AE', 'rqi': str(randint(0, 10000)), 'op': 1,
-                               'ty': 23,
-                               'pc': {'m2m:sub': {
-                                   'rn': 'traffic_pattern_gui', 'nu': ["mqtt:/GUI-AE"], 'nct': 1,
-                                   'enc': {
-                                       'net': [3],
-                                   }}}}))
+    print(msg_json)
+    if "pc" in msg_json and "m2m:uril" in msg_json["pc"]:
+        print("Discover message")
+        for uri in set(msg_json['pc']['m2m:uril']).difference(subscriptions):
+            if ("BTNode" in uri):
+                # uri = /Mobius/BTNode_MAC/new_dev
+                aux = uri.split("/")
+                for x in aux:
+                    if "BTNode" in x:
+                        nodeName = x
 
-            subscriptions.add(uri)
+                # Create subscription
+                client.publish('/oneM2M/req/GUI-test/Mobius2/json',
+                              json.dumps(
+                                  {'to': uri , 'fr': 'GUI-AE', 'rqi': str(randint(0, 10000)), 'op': 1,
+                                   'ty': 23,
+                                   'pc': {'m2m:sub': {
+                                       'rn': 'Discover_device_gui', 'nu': ["mqtt:/GUI-AE"], 'nct': 1,
+                                       'enc': {
+                                           'net': [3],
+                                       }}}}))
+                subscriptions.add(uri)
+
+            elif ("MAORIOT-AE" in uri):
+                client.publish('/oneM2M/req/GUI-test/Mobius2/json',
+                              json.dumps(
+                                  {'to': uri, 'fr': 'GUI-AE', 'rqi': str(randint(0, 10000)), 'op': 1,
+                                   'ty': 23,
+                                   'pc': {'m2m:sub': {
+                                       'rn': 'traffic_pattern_gui', 'nu': ["mqtt:/GUI-AE"], 'nct': 1,
+                                       'enc': {
+                                           'net': [3],
+                                       }}}}))
+
+                subscriptions.add(uri)
 
 
 def on_gui_discovery(client, userdata, message):
@@ -75,11 +79,11 @@ def on_message(client, userdata, message):
 
     print(message.topic)
     print(message.payload)
-    msg_json = json.loads(msg.payload.decode('utf-8'))
+    msg_json = json.loads(message.payload.decode('utf-8'))
 
     if msg_json["pc"].get('m2m:sgn'):
         # Publish ack
-        mqttc.publish('/oneM2M/resp/Mobius2/GUI-AE/json',
+        client.publish('/oneM2M/resp/Mobius2/GUI-AE/json',
                       json.dumps({'to': 'Mobius', 'fr': 'GUI-AE', 'rqi': msg_json['rqi'],
                                   'rsc': 2000}))  # rsc: 2xxx request received and done, 1xxx request received but in progress
 
@@ -133,7 +137,8 @@ if __name__ == "__main__":
     client.subscribe(f'/oneM2M/reg_resp/{AE_id}/Mobius2/+')
     client.subscribe(f'/oneM2M/resp/{AE_id}/Mobius2/+')
     client.subscribe(f'/oneM2M/req/+/{AE_id}/+')
-    client.message_callback_add(f'/oneM2M/req/Mobius2/{AE_id}/json', on_data_update)
+    client.subscribe('/oneM2M/req/+/GUI-AE/+')
+    client.message_callback_add(f'/oneM2M/req/Mobius2/{AE_id}/json', on_message)
 
     client.message_callback_add(f'/oneM2M/resp/{AE_id}Init/Mobius2/json', on_gui_discovery)
     client.message_callback_add(f'/oneM2M/resp/{AE_id}/Mobius2/json', on_discovery)
