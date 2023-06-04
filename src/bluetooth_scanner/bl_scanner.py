@@ -37,31 +37,45 @@ def on_discovery_resp(client,userdata,message):
         dev_list = []
     id_list = []
     print(dev_list)
-    for dev in dev_list:
-        node = re.search(r'(?<=Mobius[/]BTNode)(\w+)',dev)
-        if node != None:
-            id_list.append(int(node.group(0)))
-    if int(ID) in id_list:
-        print('Reconnecting...')
+    if(msg_json['rqi']==AE_id+'Init'):
+        for dev in dev_list:
+            node = re.search(r'(?<=Mobius[/]BTNode)(\w+)',dev)
+            if node != None:
+                id_list.append(int(node.group(0)))
+        if int(ID) in id_list:
+            print('Reconnecting...')
 
-    else:
-        print('Register and create resources')
-        topic_pub = "/oneM2M/req/"+AE_id + "/" +csi_mqtt + "/json"
-        topic_reg = "/oneM2M/reg_req/"+AE_id + "/" +csi_mqtt + "/json"
-        print('AE registration')
-        client.publish(topic_reg,
-                       json.dumps({'to':csi,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':2,
-                                   'pc':{'m2m:ae':{
-                                        'rn':AE_id, 'api':'BluetoothDetector','rr':True                                       }}}))
-        
-        print('Container creation')
-        
-        # New devs
-        client.publish(topic_pub,
-                       json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}})) #publish
-        # Del devs
-        client.publish(topic_pub,
-                       json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'del_dev','mni':100}}})) #publish
+        else:
+            print('Register and create resources')
+            topic_pub = "/oneM2M/req/"+AE_id + "/" +csi_mqtt + "/json"
+            topic_reg = "/oneM2M/reg_req/"+AE_id + "/" +csi_mqtt + "/json"
+            print('AE registration')
+            client.publish(topic_reg,
+                        json.dumps({'to':csi,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':2,
+                                    'pc':{'m2m:ae':{
+                                            'rn':AE_id, 'api':'BluetoothDetector','rr':True, 'acpi':['Mobius/acp_BTNodes']}}}))
+            
+            print('Container creation')
+            
+            # New devs
+            client.publish(topic_pub,
+                        json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'new_dev','mni':100}}})) #publish
+            # Del devs
+            client.publish(topic_pub,
+                        json.dumps({'to':csi+'/'+AE_id,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':3,'pc':{'m2m:cnt':{'rn':'del_dev','mni':100}}})) #publish
+    elif(msg_json['rqi']==AE_id+'_Acp_discover'):
+        if('Mobius/acp_BTNodes' not in dev_list):
+            client.publish(topic_pub,
+                           json.dumps({'to':csi,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':1,'pc':{'m2m:acp':
+                                                                                                            {'rn':'acp_BTNodes', 'pv': {
+                                                                                                                'acr': [
+                                                                                                                    {'acor': ['CAdmin'], 'acop': 63},
+                                                                                                                    {'acor': ['all'], 'acop': 3}
+                                                                                                                ]
+                                                                                                            },
+                                                                                                            'pvs': {'acr':[{'acor':['CAdmin'], 'acop': 63}]}
+                                                                                                            }}})) #publish
+
 
 
 #define callback
@@ -107,6 +121,9 @@ client.subscribe(topic_init_sub) #subscribe
 client.subscribe(topic_sub1) #subscribe
 client.subscribe(topic_sub2)
 client.subscribe(topic_sub3)
+client.publish('/oneM2M/req/BTNodeInit/Mobius2/json',
+               json.dumps({'to':csi,'fr':AE_id,'rqi':AE_id+'_Acp_discover','op':2,'fc':{'fu':1,'ty':1}}))
+time.sleep(1)
 client.publish('/oneM2M/req/BTNodeInit/Mobius2/json',
                json.dumps({'to':csi,'fr':AE_id,'rqi':AE_id+'Init','op':2,'fc':{'fu':1,'ty':2}}))
 

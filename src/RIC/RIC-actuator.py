@@ -11,30 +11,48 @@ def on_ric_discovery(client, userdata, message):
     print(message.payload)
     msg = json.loads(message.payload)
     if msg.get('pc') and msg['pc'].get('m2m:uril'):
-        if AE_id not in msg['pc']['m2m:uril']:
-            client.publish(f'/oneM2M/reg_req/{AE_id}/Mobius2/json',
-                       json.dumps({'to':csi,
-                                   'fr':AE_id,
-                                   'rqi':AE_id+str(int(randint(0,10000))),
-                                   'op':1,
-                                   'ty':2,
-                                   'pc':{'m2m:ae':{
-                                        'rn':AE_id,
-                                        'api':'RIC-Actuator',
-                                        'rr':True
-                                       }}}))
-            client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',
-                           json.dumps({'to':f'{csi}/{AE_id:}',
-                                   'fr':AE_id,
-                                   'rqi':AE_id+str(int(randint(0,10000))),
-                                   'op':1,
-                                   'ty':3,
-                                   'pc':{'m2m:cnt':{
-                                        'rn':'cell_status',
-                                        'mni':100
-                                       }}}))
-        else:
-            print('Reconnecting')
+        if(msg.get('rqi') and msg['rqi'].startswith(f'{AE_id}_discovery_')):
+            if AE_id not in msg['pc']['m2m:uril']:
+                client.publish(f'/oneM2M/reg_req/{AE_id}/Mobius2/json',
+                        json.dumps({'to':csi,
+                                    'fr':AE_id,
+                                    'rqi':AE_id+str(int(randint(0,10000))),
+                                    'op':1,
+                                    'ty':2,
+                                    'pc':{'m2m:ae':{
+                                            'rn':AE_id,
+                                            'api':'RIC-Actuator',
+                                            'rr':True,
+                                            'acpi':[f'Mobius/acp_{AE_id}']
+                                        }}}))
+                client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',
+                            json.dumps({'to':f'{csi}/{AE_id:}',
+                                    'fr':AE_id,
+                                    'rqi':AE_id+str(int(randint(0,10000))),
+                                    'op':1,
+                                    'ty':3,
+                                    'pc':{'m2m:cnt':{
+                                            'rn':'cell_status',
+                                            'mni':100
+                                        }}}))
+            else:
+                print('Reconnecting')
+        elif(msg.get('rqi') and msg['rqi'].startswith(f'{AE_id}_acp')):
+            if msg.get('pc') and msg['pc'].get('m2m:uril'):
+                dev_list = msg["pc"]["m2m:uril"]
+            else:
+                dev_list = []
+            if(f'Mobius/acp_{AE_id}' not in dev_list):
+                client.publish(f'/oneM2M/req/{AE_id}/Mobius2/json',
+                            json.dumps({'to':csi,'fr':AE_id,'rqi':str(randint(0,100000)),'op':1,'ty':1,'pc':{'m2m:acp':
+                                                                                                                {'rn':f'acp_{AE_id}', 'pv': {
+                                                                                                                    'acr': [
+                                                                                                                        {'acor': ['CAdmin',f'acp_{AE_id}'], 'acop': 63},
+                                                                                                                        {'acor': ['GUI-test'], 'acop': 3}
+                                                                                                                    ]
+                                                                                                                },
+                                                                                                                'pvs': {'acr':[{'acor':['CAdmin'], 'acop': 63}]}
+                                                                                                                }}})) #publish
 
 
 
@@ -135,6 +153,15 @@ client.message_callback_add(f'/oneM2M/resp/{AE_id}Init/Mobius2/json',on_ric_disc
 client.message_callback_add(f'/oneM2M/resp/{AE_id}/Mobius2/json',on_discovery)
 client.subscribe(f'/oneM2M/resp/{AE_id}Init/Mobius2/json')
 client.subscribe(f'/oneM2M/resp/{AE_id}/Mobius2/json')
+
+
+client.publish(f'/oneM2M/req/{AE_id}Init/Mobius2/json',
+               json.dumps({'to':csi,
+                           'fr':AE_id,
+                           'rqi':f'{AE_id}_acp_{str(int(randint(0,100000)))}',
+                           'op':2,
+                           'fc':{'fu':1,'ty':1}}))
+
 
 
 client.publish(f'/oneM2M/req/{AE_id}Init/Mobius2/json',
